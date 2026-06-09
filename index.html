@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PAN Card Editor – Testing Only</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #c8c8c8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 20px;
+}
+
+.notice {
+  background: #fff3cd; border: 1px solid #ffc107;
+  color: #856404; padding: 7px 18px;
+  border-radius: 5px; font-size: 12px; font-weight: bold;
+}
+
+/* ── Form ── */
+.form-panel {
+  background: #fff; border-radius: 10px;
+  padding: 20px 22px; width: 100%; max-width: 500px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+}
+.form-panel h2 { font-size: 13px; color: #444; margin-bottom: 14px; border-bottom: 1px solid #eee; padding-bottom: 7px; }
+.field { margin-bottom: 11px; }
+.field label { display: block; font-size: 10px; font-weight: bold; color: #666; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.field input[type=text] { width: 100%; padding: 7px 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+.field input:focus { outline: none; border-color: #4a90e2; }
+.photo-row { display: flex; align-items: center; gap: 12px; }
+#fpp { width: 65px; height: 80px; border: 1.5px dashed #bbb; border-radius: 3px; object-fit: cover; }
+.btn-row { display: flex; gap: 10px; margin-top: 14px; }
+.btn { flex: 1; padding: 9px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+.btn-u { background: #3a7fd5; color: #fff; }
+.btn-d { background: #27ae60; color: #fff; }
+.btn:hover { opacity: 0.86; }
+
+/* ══════════════════════════════════════════
+   PAN CARD  –  exact replica
+   Width: 720px  Height: 454px  (≈ CR80 ratio)
+══════════════════════════════════════════ */
+#pan-card {
+  width: 720px;
+  height: 454px;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.38);
+  /* exact sky-blue gradient from the original */
+  background:
+    linear-gradient(175deg,
+      #c2dff0 0%,
+      #b8d8ee 15%,
+      #a8cce6 35%,
+      #b2d4ec 55%,
+      #c0dcf2 75%,
+      #cce4f8 100%);
+}
+
+/* faint watermark face in center */
+#pan-card::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 52%;
+  transform: translate(-50%, -50%);
+  width: 200px; height: 260px;
+  background: radial-gradient(ellipse at 50% 35%,
+    rgba(160,200,230,0.28) 0%,
+    rgba(140,185,220,0.12) 50%,
+    transparent 72%);
+  border-radius: 50% 50% 42% 42%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* everything above watermark */
+#pan-card > * { position: relative; z-index: 1; }
+
+/* ─── HEADER ─── */
+.ph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 20px 5px 20px;
+}
+
+.ph-left  { display: flex; flex-direction: column; gap: 0; }
+.ph-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+
+.h-hi  { font-size: 20px; font-weight: 900; color: #6b1515; line-height: 1.15; }
+.h-en  { font-size: 15px; font-weight: 900; color: #6b1515; letter-spacing: 0.6px; line-height: 1.2; }
+
+.ph-center {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+/* Ashoka emblem using actual image from govt (or fallback canvas) */
+#emblem-img {
+  width: 58px; height: 62px;
+  object-fit: contain;
+}
+.satyamev {
+  font-size: 9.5px; color: #5a0a0a; font-weight: bold; letter-spacing: 0.4px;
+}
+
+/* ─── BODY ─── */
+.pb {
+  display: flex;
+  padding: 8px 18px 8px 18px;
+  gap: 0;
+  height: calc(100% - 90px);
+}
+
+/* LEFT – photo */
+.pb-photo {
+  flex-shrink: 0;
+  width: 158px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+#card-photo {
+  width: 148px;
+  height: 184px;
+  object-fit: cover;
+  border: 2px solid #9ab4c8;
+  display: block;
+  background: #c4d8e8;
+}
+
+/* CENTER – info */
+.pb-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 10px 2px 16px;
+  gap: 0;
+}
+
+.sub-hi {
+  font-size: 14px; font-style: italic;
+  color: #6a1a6a; font-weight: bold;
+  line-height: 1.3; margin-bottom: 1px;
+}
+.sub-en {
+  font-size: 13px; font-style: italic;
+  color: #2a2a6a; font-weight: bold;
+  line-height: 1.3; margin-bottom: 5px;
+}
+
+.pan-no {
+  font-size: 24px; font-weight: 900;
+  color: #111; letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.lbl {
+  font-size: 12px; font-style: italic;
+  color: #6a1a6a; line-height: 1.3;
+  margin-bottom: 1px;
+}
+.val {
+  font-size: 15px; font-weight: 900;
+  color: #111; letter-spacing: 0.4px;
+  margin-bottom: 7px;
+}
+
+/* bottom row: DOB left, signature right */
+.dob-sig-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-top: 2px;
+}
+.dob-col { flex: 1; }
+
+.sig-col {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+}
+.sig-box {
+  width: 160px; height: 62px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #aaa;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#sig-canvas { display: block; }
+.sig-lbl {
+  font-size: 11px; font-style: italic;
+  color: #6a1a6a; text-align: center;
+}
+
+/* RIGHT – QR */
+.pb-qr {
+  flex-shrink: 0;
+  width: 160px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+#qr-canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+</style>
+</head>
+<body>
+
+<div class="notice">⚠️ For Testing / Learning Purposes Only</div>
+
+<!-- FORM -->
+<div class="form-panel">
+  <h2>Edit PAN Card Details</h2>
+
+  <div class="field">
+    <label>PAN Number</label>
+    <input type="text" id="f-pan" value="BNZPM2501F" maxlength="10"
+      style="text-transform:uppercase;letter-spacing:3px;font-weight:bold;font-size:15px;">
+  </div>
+  <div class="field">
+    <label>Name (नाम)</label>
+    <input type="text" id="f-name" value="SUBHRAJEET CHOWDHURY" style="text-transform:uppercase;">
+  </div>
+  <div class="field">
+    <label>Father's Name (पिता का नाम)</label>
+    <input type="text" id="f-father" value="KRISHNADAS CHOWDHURY" style="text-transform:uppercase;">
+  </div>
+  <div class="field">
+    <label>Date of Birth (DD/MM/YYYY)</label>
+    <input type="text" id="f-dob" value="23/03/1990" maxlength="10" placeholder="DD/MM/YYYY">
+  </div>
+  <div class="field">
+    <label>Upload Photo</label>
+    <div class="photo-row">
+      <img id="fpp" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="preview">
+      <input type="file" id="f-photo" accept="image/*">
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-u" onclick="updateCard()">▶ Update Preview</button>
+    <button class="btn btn-d" onclick="downloadCard()">⬇ Download PNG</button>
+  </div>
+</div>
+
+<!-- PAN CARD -->
+<div id="pan-card">
+
+  <!-- HEADER -->
+  <div class="ph">
+    <div class="ph-left">
+      <div class="h-hi">आयकर विभाग</div>
+      <div class="h-en">INCOME TAX DEPARTMENT</div>
+    </div>
+
+    <div class="ph-center">
+      <!-- Ashoka Emblem drawn on canvas -->
+      <canvas id="emblem-canvas" width="58" height="66"></canvas>
+      <div class="satyamev">सत्यमेव जयते</div>
+    </div>
+
+    <div class="ph-right">
+      <div class="h-hi">भारत सरकार</div>
+      <div class="h-en">GOVT. OF INDIA</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="pb">
+
+    <!-- PHOTO -->
+    <div class="pb-photo">
+      <img id="card-photo"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='148' height='184'%3E%3Crect width='148' height='184' fill='%23c4d8e8'/%3E%3C/svg%3E"
+        alt="photo">
+    </div>
+
+    <!-- INFO -->
+    <div class="pb-info">
+      <div class="sub-hi">स्थायी लेखा संख्या कार्ड</div>
+      <div class="sub-en">Permanent Account Number Card</div>
+
+      <div id="c-pan" class="pan-no">BNZPM2501F</div>
+
+      <div class="lbl">नाम / Name</div>
+      <div id="c-name" class="val">SUBHRAJEET CHOWDHURY</div>
+
+      <div class="lbl">पिता का नाम / Father's Name</div>
+      <div id="c-father" class="val">KRISHNADAS CHOWDHURY</div>
+
+      <div class="dob-sig-row">
+        <div class="dob-col">
+          <div class="lbl">जन्म की तारीख /<br>Date of Birth</div>
+          <div id="c-dob" class="val" style="margin-top:2px;">23/03/1990</div>
+        </div>
+        <div class="sig-col">
+          <div class="sig-box">
+            <canvas id="sig-canvas" width="158" height="60"></canvas>
+          </div>
+          <div class="sig-lbl">हस्ताक्षर / Signature</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR CODE -->
+    <div class="pb-qr">
+      <canvas id="qr-canvas" width="155" height="200"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ════════════════════════════════════════
+//  Draw Ashoka Emblem (simplified)
+// ════════════════════════════════════════
+(function() {
+  const c = document.getElementById('emblem-canvas');
+  const ctx = c.getContext('2d');
+  const cx = 29, cy = 28, r = 24;
+
+  // Gold circle
+  const g = ctx.createRadialGradient(cx-6, cy-8, 2, cx, cy, r);
+  g.addColorStop(0, '#f5dc6a');
+  g.addColorStop(0.5, '#d4a820');
+  g.addColorStop(1, '#8c6010');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  // Ashoka chakra (wheel) - simplified
+  ctx.strokeStyle = '#5a3a00';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r*0.55, 0, Math.PI*2);
+  ctx.stroke();
+
+  // 24 spokes
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*r*0.22, cy + Math.sin(a)*r*0.22);
+    ctx.lineTo(cx + Math.cos(a)*r*0.55, cy + Math.sin(a)*r*0.55);
+    ctx.stroke();
+  }
+
+  // Lions silhouette (simple block)
+  ctx.fillStyle = '#7a5010';
+  ctx.beginPath();
+  // base platform
+  ctx.fillRect(cx-14, cy+r*0.55-2, 28, 5);
+  // left lion
+  ctx.beginPath();
+  ctx.ellipse(cx-8, cy+r*0.3, 5, 8, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx-10, cy+r*0.14, 5, 0, Math.PI*2);
+  ctx.fill();
+  // right lion
+  ctx.beginPath();
+  ctx.ellipse(cx+8, cy+r*0.3, 5, 8, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx+10, cy+r*0.14, 5, 0, Math.PI*2);
+  ctx.fill();
+  // center lion (front)
+  ctx.beginPath();
+  ctx.ellipse(cx, cy+r*0.28, 4, 7, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy+r*0.1, 5, 0, Math.PI*2);
+  ctx.fill();
+})();
+
+// ════════════════════════════════════════
+//  Draw Signature (cursive strokes)
+// ════════════════════════════════════════
+(function() {
+  const c = document.getElementById('sig-canvas');
+  const ctx = c.getContext('2d');
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Signature path - matches the wavy signature in the image
+  const paths = [
+    [[20,40],[28,20],[38,38],[46,22],[52,38]],
+    [[54,30],[62,18],[72,36],[80,22],[90,34]],
+    [[92,28],[100,16],[112,32],[120,20],[132,30]],
+    [[134,28],[138,24],[142,30]]
+  ];
+  paths.forEach(pts => {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      const xc = (pts[i-1][0] + pts[i][0]) / 2;
+      const yc = (pts[i-1][1] + pts[i][1]) / 2;
+      ctx.quadraticCurveTo(pts[i-1][0], pts[i-1][1], xc, yc);
+    }
+    ctx.stroke();
+  });
+})();
+
+// ════════════════════════════════════════
+//  Draw QR Code (realistic dense pattern)
+// ════════════════════════════════════════
+(function() {
+  const c = document.getElementById('qr-canvas');
+  const ctx = c.getContext('2d');
+  const W = 155, H = 200;
+  const CELLS = 29;
+  const CELL = (W - 12) / CELLS;
+  const OX = 6, OY = (H - CELLS * CELL) / 2;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  let seed = 12345;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 0xffffffff; }
+
+  function drawFinder(startR, startC) {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        const outer = r===0||r===6||c===0||c===6;
+        const inner = r>=2&&r<=4&&c>=2&&c<=4;
+        if (outer || inner) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(OX + (startC+c)*CELL, OY + (startR+r)*CELL, CELL-0.4, CELL-0.4);
+        } else {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(OX + (startC+c)*CELL, OY + (startR+r)*CELL, CELL-0.4, CELL-0.4);
+        }
+      }
+    }
+  }
+
+  // Draw all data cells first
+  for (let r = 0; r < CELLS; r++) {
+    for (let c = 0; c < CELLS; c++) {
+      if (rnd() > 0.48) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(OX + c*CELL, OY + r*CELL, CELL-0.4, CELL-0.4);
+      }
+    }
+  }
+
+  // Finder patterns (top-left, top-right, bottom-left)
+  drawFinder(0, 0);
+  drawFinder(0, CELLS-7);
+  drawFinder(CELLS-7, 0);
+
+  // White separator around finders
+  ctx.fillStyle = '#fff';
+  // TL separator
+  for (let i = 0; i <= 7; i++) {
+    ctx.fillRect(OX + i*CELL, OY + 7*CELL, CELL, CELL);
+    ctx.fillRect(OX + 7*CELL, OY + i*CELL, CELL, CELL);
+  }
+  // TR separator
+  for (let i = CELLS-8; i <= CELLS; i++) {
+    ctx.fillRect(OX + i*CELL, OY + 7*CELL, CELL, CELL);
+  }
+  for (let i = 0; i <= 7; i++) {
+    ctx.fillRect(OX + (CELLS-8)*CELL, OY + i*CELL, CELL, CELL);
+  }
+  // BL separator
+  for (let i = 0; i <= 7; i++) {
+    ctx.fillRect(OX + i*CELL, OY + (CELLS-8)*CELL, CELL, CELL);
+  }
+  for (let i = CELLS-8; i <= CELLS; i++) {
+    ctx.fillRect(OX + 7*CELL, OY + i*CELL, CELL, CELL);
+  }
+
+  // Re-draw finders clean on top
+  drawFinder(0, 0);
+  drawFinder(0, CELLS-7);
+  drawFinder(CELLS-7, 0);
+
+  // Outer border
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(OX, OY, CELLS*CELL, CELLS*CELL);
+})();
+
+// ════════════════════════════════════════
+//  Photo handling
+// ════════════════════════════════════════
+let photoDataUrl = null;
+
+document.getElementById('f-photo').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoDataUrl = ev.target.result;
+    document.getElementById('fpp').src = photoDataUrl;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ════════════════════════════════════════
+//  Update card
+// ════════════════════════════════════════
+function updateCard() {
+  document.getElementById('c-pan').textContent    = document.getElementById('f-pan').value.toUpperCase();
+  document.getElementById('c-name').textContent   = document.getElementById('f-name').value.toUpperCase();
+  document.getElementById('c-father').textContent = document.getElementById('f-father').value.toUpperCase();
+  document.getElementById('c-dob').textContent    = document.getElementById('f-dob').value;
+
+  if (photoDataUrl) {
+    document.getElementById('card-photo').src = photoDataUrl;
+  }
+}
+
+// ════════════════════════════════════════
+//  Download
+// ════════════════════════════════════════
+function downloadCard() {
+  updateCard();
+  html2canvas(document.getElementById('pan-card'), {
+    scale: 3, useCORS: true, allowTaint: true,
+    backgroundColor: null, logging: false
+  }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = 'pan_card_test.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+}
+</script>
+</body>
+</html>
